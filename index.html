@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="National Road 6 — a text-based survival journey across Cambodia, September 1962."
+    />
+    <title>National Road 6</title>
+
+    <!-- Tailwind CSS via CDN for the first playable prototype. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              terminal: ["VT323", "monospace"],
+            },
+            colors: {
+              phosphor: "#9bbc0f",
+              amber: "#ffb000",
+              terminal: "#080b08",
+            },
+            boxShadow: {
+              phosphor: "0 0 8px rgba(155, 188, 15, 0.55)",
+              amber: "0 0 8px rgba(255, 176, 0, 0.5)",
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body
+    class="crt phosphor-glow h-screen overflow-hidden bg-black px-2 py-2 font-terminal leading-none text-phosphor sm:px-4 sm:py-4"
+  >
+    <main class="crt-frame terminal-frame aspect-video w-full max-w-none mx-auto flex flex-col overflow-hidden border-2 border-phosphor bg-terminal p-2 shadow-phosphor sm:p-4">
+      <!-- Terminal title bar -->
+      <header class="terminal-header mb-2 flex shrink-0 items-center justify-between border-b border-phosphor pb-2 text-amber sm:mb-3">
+        <h1 class="tracking-widest">NATIONAL ROAD 6</h1>
+        <span class="text-base uppercase tracking-wider">survival terminal</span>
+      </header>
+
+      <!-- Top ASCII window: game.js can replace #ascii-scene with location art. -->
+      <section
+        aria-label="Current location"
+        class="ascii-viewport mb-2 min-h-0 flex-[0_0_29%] overflow-auto border border-phosphor p-2 text-center text-amber shadow-phosphor sm:mb-3 sm:p-3"
+      >
+        <div id="top-ascii-window" class="ascii inline-block text-left font-mono" aria-live="polite">
+  .--------------------------------------------------------------------------.
+  |                    NATIONAL ROAD 6 // 09.1962                           |
+  |                                                                          |
+  |                 Phnom Penh  ----->  Siem Reap                            |
+  |                      MONSOON SEASON                                     |
+  |                                                                          |
+  '--------------------------------------------------------------------------'
+        </div>
+      </section>
+
+      <!-- Compact state readout: game.js updates these values by id. -->
+      <section
+        id="status-bar"
+        aria-label="Journey status"
+        class="status-bar mb-2 grid shrink-0 grid-cols-2 gap-x-4 gap-y-1 border-y border-phosphor px-2 py-2 uppercase sm:mb-3 sm:grid-cols-4"
+      >
+        <div>day <span id="status-day" class="text-amber">01</span></div>
+        <div>weather <span id="status-weather" class="text-amber">rain</span></div>
+        <div>health <span id="status-health" class="text-amber">100%</span></div>
+        <div>distance <span id="status-distance" class="text-amber">314 km</span></div>
+      </section>
+
+      <!-- Narrative/event output -->
+      <section
+        id="narrative-box"
+        aria-label="Journey log"
+        aria-live="polite"
+        class="ascii narrative-viewport min-h-0 flex-1 overflow-y-auto border border-phosphor p-2 sm:p-3"
+      >
+        <p class="mb-3 text-amber">SEPTEMBER 1962 // PHNOM PENH</p>
+        <p>You have one road, a failing truck, and a long way to Angkor Wat.</p>
+        <p class="mt-3">Type <span class="text-amber">HELP</span> for available commands.</p>
+      </section>
+
+      <!-- Input line: game.js should listen for submit on #command-form. -->
+      <form id="command-form" class="command-line mt-2 flex shrink-0 items-center gap-2 border-t border-phosphor pt-2 sm:mt-3 sm:pt-3" autocomplete="off">
+        <label for="command-input" class="shrink-0 text-amber">&gt;</label>
+        <input
+          id="command-input"
+          name="command"
+          type="text"
+          inputmode="text"
+          spellcheck="false"
+          placeholder="ENTER COMMAND"
+          aria-label="Game command"
+          class="min-w-0 flex-1 border-0 border-b border-phosphor bg-transparent px-1 py-1 text-phosphor outline-none placeholder:text-phosphor/50 focus:border-amber focus:text-amber focus:ring-0"
+        />
+        <span aria-hidden="true" class="terminal-caret text-amber">█</span>
+      </form>
+
+      <footer class="terminal-footer mt-2 flex shrink-0 justify-between uppercase tracking-wider text-phosphor/70 sm:mt-3">
+        <span>phnom penh &gt; siem reap</span>
+        <span>v0.1 // monsoon build</span>
+      </footer>
+    </main>
+
+    <!-- Load artwork and game logic after the terminal markup exists. -->
+    <script src="asciiData.js"></script>
+    <script src="events.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>

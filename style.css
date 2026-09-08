@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+/* Keep ASCII art aligned on every screen size. */
+.ascii {
+  white-space: pre;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ascii::-webkit-scrollbar,
+.terminal-frame::-webkit-scrollbar,
+.terminal-frame *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  display: grid;
+  place-items: center;
+}
+
+/* The stage stays 16:9 while also fitting short landscape displays. */
+.terminal-frame {
+  width: min(calc(100vw - 1rem), calc((100vh - 1rem) * 1.7778));
+  max-width: none;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  font-size: clamp(0.7rem, 1.45vw, 1.35rem);
+}
+
+.terminal-header h1 {
+  font-size: clamp(0.9rem, 2.1vw, 1.6rem);
+}
+
+.terminal-header span,
+.terminal-footer {
+  font-size: clamp(0.55rem, 0.9vw, 0.85rem);
+}
+
+.ascii-viewport,
+.narrative-viewport {
+  font-size: clamp(0.65rem, 1.25vw, 1.1rem);
+}
+
+.ascii-viewport {
+  display: flex;
+  flex: 1 1 0%;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  line-height: 0.95;
+}
+
+.narrative-viewport {
+  flex: 1 1 0%;
+  min-height: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ascii-viewport > #top-ascii-window {
+  max-width: 100%;
+  font-size: clamp(0.45rem, 0.9vw, 0.95rem);
+  line-height: 0.95;
+}
+
+/* game.js may add the title treatment dynamically; keep it inside the viewport. */
+.ascii-viewport .nr6-logo {
+  max-width: 100%;
+  padding: clamp(0.35rem, 1.2vw, 1.25rem) clamp(0.75rem, 2vw, 2.25rem);
+}
+
+.ascii-viewport .nr6-logo pre {
+  font-size: clamp(0.55rem, 1.6vw, 1.4rem) !important;
+  line-height: 1 !important;
+}
+
+.ascii-viewport .nr6-subtitle {
+  font-size: clamp(0.45rem, 0.8vw, 0.8rem) !important;
+  letter-spacing: clamp(0.08em, 0.35vw, 0.25em) !important;
+}
+
+.status-bar,
+.command-line {
+  font-size: clamp(0.65rem, 1.15vw, 1rem);
+}
+
+/* At very short viewport heights, the frame derives its size from height. */
+@media (max-height: 42rem) {
+  .terminal-frame {
+    width: min(calc(100vw - 1rem), calc((100vh - 1rem) * 1.7778));
+  }
+}
+
+/* Subtle CRT glass scanlines. */
+.crt::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.025) 0,
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  mix-blend-mode: screen;
+}
+
+/* Gentle phosphor flicker keeps the terminal text alive without obscuring it. */
+.phosphor-glow {
+  text-shadow: 0 0 5px rgba(34, 197, 94, 0.8);
+  animation: phosphor-flicker 4s steps(1, end) infinite;
+}
+
+@keyframes phosphor-flicker {
+  0%,
+  96%,
+  100% {
+    opacity: 1;
+  }
+
+  97% {
+    opacity: 0.94;
+  }
+}
+
+/* Curved CRT glass effect around the terminal frame. */
+.crt-frame {
+  border-radius: 0.45rem;
+  box-shadow:
+    inset 0 0 28px rgba(34, 197, 94, 0.12),
+    inset 0 0 5px rgba(255, 255, 255, 0.12),
+    0 0 8px rgba(155, 188, 15, 0.55);
+}
+
+.terminal-caret {
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}

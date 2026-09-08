@@ -1,0 +1,27 @@
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Editor and IDE settings
+.vscode/
+.idea/
+.cursor/
+.cursorrules
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Local secrets and environment configuration
+.env
+.env.*
+!.env.example
+
+# Coverage and tool caches
+coverage/
+.cache/
