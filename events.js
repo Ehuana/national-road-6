@@ -1,84 +1,110 @@
 /* Weighted September 1962 event table for National Road 6. */
 const EVENT_DATA = Object.freeze([
   {
-    id: "blown_tire", title: "A blown tire", art: "peugeot203", weight: 10,
-    text: "A sharp stone on the red road tears through a tire.",
-    choices: ["Use a spare tire and continue.", "Push onward slowly and risk the axle."],
+    id: "kampong_kdei_bridge", title: "The ancient Naga bridge", art: "ancientBridge", weight: 5,
+    // NEW ART KEY — an 800-year-old laterite bridge, naga-head carvings, river running high beneath the arches
+    text: "At Kampong Kdei, the road crosses an ancient stone bridge carved with naga heads, its arches nearly swallowed by the swollen river.",
+    choices: ["Cross on foot first to test it.", "Drive straight across."],
   },
   {
-    id: "broken_wooden_axle", title: "A broken wooden axle", art: "brokenBridge", weight: 7,
-    text: "The cart jolts hard. A wooden axle has split under the load.",
-    choices: ["Pay a local carpenter 250 riels.", "Repair it with rope and lose a day."],
+    id: "sambor_prei_kuk_ruins", title: "Brick towers in the forest", art: "angkorRuins", weight: 4,
+    // NEW ART KEY — pre-Angkorian brick temple towers half-swallowed by jungle
+    text: "A side track leads to old brick temple towers rising from the trees, older than Angkor itself.",
+    choices: ["Take the detour and pay respects.", "Stay on the main road and press on."],
   },
   {
-    id: "red_clay_overheat", title: "Deep red clay", art: "jungleRoad", weight: 8,
-    text: "The wheels sink into red clay and the engine overheats in the humid air.",
-    choices: ["Stop and let the engine cool.", "Force the vehicle through the mud."],
+    id: "stung_saen_ferry_trouble", title: "Engine trouble on the Stung Saen", art: "ferry", weight: 6,
+    text: "The ferry's engine sputters and dies halfway across the river at Kampong Thom.",
+    choices: ["Help the ferrymen paddle across.", "Wait for the engine to be restarted."],
   },
   {
-    id: "malaria_fever", title: "Fever near the flooded fields", art: "ferry", weight: 7,
-    text: "Mosquitoes rise from the flooded grass. One traveler begins to shiver with fever.",
-    choices: ["Use quinine medicine.", "Rest and hope the fever breaks."],
+    id: "floating_pagoda_blessing", title: "A floating pagoda", art: "phnomPenh", weight: 4,
+    // NEW ART KEY — a floating pagoda on the river
+    text: "A pagoda built on rafts drifts near the riverbank. A monk offers a blessing for safe travel.",
+    choices: ["Accept the blessing and leave a donation.", "Wave and continue on."],
   },
   {
-    id: "waterborne_bug", title: "Bad drinking water", art: "ferry", weight: 7,
-    text: "The water barrel was fouled somewhere behind Kampong Cham.",
-    choices: ["Treat the water with medicine.", "Continue and accept the sickness."],
+    id: "elephant_mud_rescue", title: "A working elephant", art: "elephant", weight: 5,
+    // NEW ART KEY — a logging elephant and mahout hauling timber roadside
+    text: "A logging elephant and its mahout are hauling teak nearby, well used to the mud.",
+    choices: ["Pay the mahout to pull the vehicle free.", "Wait until the elephant finishes its own load."],
   },
   {
-    id: "heat_exhaustion", title: "Heat exhaustion", art: "jungleRoad", weight: 6,
-    text: "Even beneath the clouds, the wet heat leaves everyone weak.",
-    choices: ["Rest in the shade and lose a day.", "Keep moving at a strenuous pace."],
+    id: "leeches_paddy", title: "Leeches in the paddy", art: "jungleRoad", weight: 6,
+    text: "Wading out to check the road ahead through a flooded rice paddy, leeches cling to bare skin.",
+    choices: ["Use salt to remove them carefully.", "Pull them off quickly and keep moving."],
   },
   {
-    id: "swollen_stream", title: "A swollen stream", art: "ferry", weight: 9,
-    text: "A normally shallow stream has become a brown, fast-moving channel.",
-    choices: ["Wait for the water to recede.", "Search for a safer crossing."],
+    id: "mosquito_camp", title: "Dusk over the flooded fields", art: "campNight", weight: 6,
+    // NEW ART KEY — camp at dusk, mosquito haze over flooded rice fields
+    text: "Dusk brings a rising hum of mosquitoes over the flooded fields near camp.",
+    choices: ["Buy a mosquito net for 80 riels.", "Sleep close to the smoke of the fire."],
   },
   {
-    id: "fallen_tree", title: "A tree across National Road 6", art: "jungleRoad", weight: 8,
-    text: "A monsoon-felled tree blocks the road. Other travelers are already gathering.",
-    choices: ["Help clear the road.", "Take a muddy detour."],
+    id: "dead_battery", title: "A flat battery", art: "peugeot203", weight: 6,
+    text: "The battery is flat and the engine refuses to turn over.",
+    choices: ["Push-start the vehicle downhill.", "Wait for a passing truck to give a jump."],
   },
   {
-    id: "skun_mud", title: "The Skun mud trap", art: "jungleRoad", weight: 9,
-    text: "Near Skun, the road becomes a brown ribbon of mud that grips the wheels.",
-    choices: ["Hire oxen to pull the vehicle free.", "Dig and push with the party."],
+    id: "corvee_road_crew", title: "A volunteer road crew", art: "jungleRoad", weight: 6,
+    text: "A crew of volunteer laborers is filling a washed-out culvert with gravel and broken brick.",
+    choices: ["Join the work for an hour.", "Pay a small toll to pass ahead of the queue."],
   },
   {
-    id: "dragonfruit_trade", title: "A generous roadside trade", art: "traderNPC", weight: 8,
-    text: "Local farmers offer fresh dragonfruit and river fish beside the road.",
-    choices: ["Buy fresh food for 120 riels.", "Trade news and share the meal."],
+    id: "provincial_checkpoint", title: "A provincial checkpoint", art: "checkpoint", weight: 5,
+    // NEW ART KEY — a barrier pole and small guardhouse at a provincial boundary
+    text: "A checkpoint at the provincial boundary stops traffic to inspect papers.",
+    choices: ["Present your papers and wait.", "Offer a small gift to move things along."],
   },
   {
-    id: "roadside_wat", title: "Shelter at a roadside Wat", art: "phnomPenh", weight: 5,
-    text: "Monks at a small roadside pagoda offer dry shelter from the rain.",
-    choices: ["Rest and accept the monks' kindness.", "Leave a donation of 100 riels and rest."],
+    id: "buffalo_bridge", title: "A buffalo on the bridge", art: "oxCart", weight: 6,
+    text: "A water buffalo has planted itself on a narrow wooden bridge and will not budge.",
+    choices: ["Coax it aside with fresh-cut grass.", "Find a way around through the shallows."],
   },
   {
-    id: "lost_cattle", title: "Cattle on the road", art: "oxCart", weight: 6,
-    text: "A herd of cattle wanders across the road, bringing traffic to a halt.",
-    choices: ["Wait for the herder to clear them.", "Guide the animals aside."],
+    id: "colonial_relais", title: "An old relais station", art: "phnomPenh", weight: 4,
+    text: "A French-built rest house stands at the roadside, its caretaker still keeping the lamps lit.",
+    choices: ["Pay for a room and dry blankets.", "Sleep in the vehicle and save the money."],
   },
   {
-    id: "fuel_trader", title: "A fuel trader", art: "traderNPC", weight: 5,
-    text: "A drum merchant has a little petrol left, but the price is steep.",
-    choices: ["Buy 10 liters for 500 riels.", "Save your money and continue."],
+    id: "radio_storm_warning", title: "A warning on the radio", art: "traderNPC", weight: 5,
+    text: "A crackling radio at a roadside stall warns of a heavy storm moving up from the gulf.",
+    choices: ["Stop early and wait it out.", "Push on to outrun the worst of it."],
   },
   {
-    id: "newspaper_news", title: "News from Phnom Penh", art: "traderNPC", weight: 4,
-    text: "A traveler shares a newspaper and fresh news from the capital.",
-    choices: ["Trade 50 riels for the newspaper.", "Listen and move on."],
+    id: "rubber_lorry_blockage", title: "A broken-down lorry", art: "bedfordTruck", weight: 6,
+    text: "An overloaded rubber-plantation lorry has snapped an axle, blocking the narrow road near Kampong Cham.",
+    choices: ["Help unload sacks to lighten it.", "Wait for others to clear a path."],
   },
   {
-    id: "monsoon_lightning", title: "Lightning over the plain", art: "ferry", weight: 5,
-    text: "Lightning walks across the plain. The rain is too heavy to see the road.",
-    choices: ["Stop under cover.", "Drive slowly through the storm."],
+    id: "cobra_road", title: "A cobra in the road", art: "jungleRoad", weight: 4,
+    text: "A cobra stretches across the road, unhurried, in the fading light.",
+    choices: ["Wait for it to move on its own.", "Sound the horn to startle it away."],
   },
   {
-    id: "helpful_mechanic", title: "A helpful mechanic", art: "bedfordTruck", weight: 3,
-    text: "A mechanic traveling north recognizes the sound of your troubled vehicle.",
-    choices: ["Accept a free adjustment.", "Offer 100 riels for a full check."],
+    id: "silk_village_trade", title: "Weavers by the road", art: "traderNPC", weight: 5,
+    text: "Weavers in a roadside village display bolts of hand-dyed silk kramas.",
+    choices: ["Buy a few kramas for 90 riels.", "Admire the work and move on."],
+  },
+  {
+    id: "evening_fog", title: "Fog off the plain", art: "jungleRoad", weight: 5,
+    text: "Fog rolls off the flooded plain at dusk, swallowing the road ahead.",
+    choices: ["Stop and wait for the fog to lift.", "Creep forward with headlamps low."],
+  },
+  {
+    id: "broken_fan_belt", title: "A snapped fan belt", art: "peugeot203", weight: 6,
+    text: "A frayed fan belt finally snaps somewhere past Skun.",
+    choices: ["Improvise a replacement from rope and cloth.", "Wait for a passing vehicle with spare parts."],
+  },
+  {
+    id: "washed_out_timber_bridge", title: "Washed-out timber bridge", art: "brokenBridge", weight: 8,
+    text: "A timber bridge has washed out under the monsoon current. The far bank is visible, but the road is not passable.",
+    choices: ["Wait 2 days for the water to drop.", "Pay an ox team 100 riels to haul you across.", "Risk the ford (-30% vehicle condition)."],
+  },
+  {
+    id: "deep_clay_mud_pit", title: "Deep clay mud pit", art: "jungleRoad", weight: 8,
+    text: "A deep pit of red clay has swallowed the wheels. Rain continues to fill the ruts around the vehicle.",
+    choices: ["Spend 1 day digging out (-10 party stamina).", "Wait 2 days for a passing truck."],
   },
 ]);
 

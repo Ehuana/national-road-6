@@ -21,16 +21,15 @@ const ASCII_ART = {
            \____________________________________/
               Cambodian wooden ox-cart`,
 
-    peugeot203: String.raw`               ______________________________
-          ____/  _   _   _   _   _   _   _  \____
-        _/     _____________________________     \_
-       /______/  _  _  _  _  _  _  _  _  _  \______\
-      |      | | | | | | | | | | | | | | | |      |
-      |______|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|______|
-        O                                      O
-       /|\                                    /|\
-      /_|_\__________________________________/​_|_\
-          Peugeot 203 // French road sedan`,
+    peugeot203: String.raw`
+                   ______--------___
+                  /|             / |
+        o___________|_\__________/__|
+      ]|___     |  |=   ||  =|___  |"
+      //   \\    |  |____||_///   \\|"
+      |  X  |\--------------/|  X  |\"
+       \___/                  \___/
+                Peugeot 203`,
 
     bedfordTruck: String.raw`             _________________________________
         ____/|                                 |\____
@@ -46,21 +45,33 @@ const ASCII_ART = {
   }),
 
   locations: Object.freeze({
-    phnomPenh: String.raw`                         .-''''''''-.
-                    .-'                '-.
-                  .'       .--------.     '.
-                 /       .'          '.     \
-                /      .'              '.    \
-               ;      /       /\         \    ;
-               |     ;       /  \         ;   |
-               |     |      /____\        |   |
-               ;     |   .-'      '-.     |   ;
-                \    | .'            '.   |  /
-                 '.  |/________________\  |.'
-                   '-.________________.-'
-                _|__|__|__|__|__|__|__|__|_
-               /____________________________\
-                 PHSAR THMEI // PHNOM PENH`,
+    phnomPenh: String.raw`
+       .------------------.          .------------------.
+      /      NW WING       \        /      NE WING       \
+     |                      \      /                      |
+      \     .------------.   \    /   .------------.     /
+       \   /              \   \  /   /              \   /
+        \ /                \   \/   /                \ /
+         \                  \  /\  /                  /
+          \                  \/  \/                  /
+           \       .-------------------------.      /
+            \    .'       .------------.      '.   /
+             \  /        /  .--------.  \       \ /
+              ;         |  /   (  )   \  |       ;
+              |         | |    (OO)    | |       |
+              ;         |  \   (  )   /  |       ;
+             /  \        \  '---------'  /      / \
+            /    '.       '-------------'     .'   \
+           /       '-------------------------'      \
+          /                  /\  /\                  \
+         /                  /  \/  \                  \
+        / /                /   /\   \                \ \
+       /   \              /   /  \   \              /   \
+      /     '------------'   /    \   '------------'     \
+     |                      /      \                      |
+      \      SW WING       /        \      SE WING       /
+       '------------------'          '------------------'
+                   PHSAR THMEI // PHNOM PENH`,
 
     ferry: String.raw`       ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
              |\                         /|
@@ -131,6 +142,8 @@ const ASCII_ART = {
 ASCII_ART.ferry = ASCII_ART.locations.ferry;
 ASCII_ART.brokenBridge = ASCII_ART.locations.brokenBridge;
 ASCII_ART.traderNPC = ASCII_ART.locations.traderNPC;
+ASCII_ART.angkorWat = ASCII_ART.locations.angkorWat;
+ASCII_ART.monsoonRain = ASCII_ART.weather.monsoonRain;
 Object.freeze(ASCII_ART);
 
 // index.html loads scripts normally (without type="module"), so expose the

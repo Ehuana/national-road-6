@@ -13,15 +13,20 @@
 const GAME_STATES = Object.freeze({
   MENU: "MENU",
   HOW_TO_PLAY: "HOW_TO_PLAY",
+  HISTORICAL_CONTEXT: "HISTORICAL_CONTEXT",
   CHARACTER_SELECT: "CHARACTER_SELECT",
   NAME_LEADER: "NAME_LEADER",
   SET_PARTY_SIZE: "SET_PARTY_SIZE",
   NAME_COMPANIONS: "NAME_COMPANIONS",
   STARTING_SHOP: "STARTING_SHOP",
   OVERWORLD: "OVERWORLD",
+  MORNING_TRAVEL: "MORNING_TRAVEL",
+  AFTERNOON_TRAVEL: "AFTERNOON_TRAVEL",
+  NIGHT_CAMP: "NIGHT_CAMP",
   RATIONS: "RATIONS",
   PACE: "PACE",
   RIVER_CROSSING: "RIVER_CROSSING",
+  FLASH_FLOOD: "FLASH_FLOOD",
   EVENT_DECISION: "EVENT_DECISION",
   TOMBSTONE_EVENT: "TOMBSTONE_EVENT",
   SHOP: "SHOP",
@@ -54,7 +59,7 @@ const gameState = {
   companionIndex: 0,
   vehicle: {
     name: "Peugeot 203",
-    speed: 45,
+    speed: 16,
     fuelBurnRate: 5,
   },
   pace: "Steady",
@@ -62,7 +67,11 @@ const gameState = {
   riverCrossings: { 70: false, 190: false },
   pendingRiver: null,
   pendingTombstone: null,
-  weather: "Clear",
+  pendingTravelMessage: "",
+  dailyDistance: 0,
+  weather: "CLEAR",
+  vehicleCondition: 100,
+  finalScore: 0,
   pendingEvent: null,
   character: "",
 };
@@ -82,6 +91,12 @@ const RATION_LEVELS = Object.freeze({
   "Bare Bones": { kgPerPerson: 0.5 },
 });
 
+const WEATHER_STATES = Object.freeze({
+  CLEAR: "CLEAR",
+  MONSOON_RAIN: "MONSOON_RAIN",
+  FLASH_FLOOD: "FLASH_FLOOD",
+});
+
 const SHOP_PRICES = Object.freeze({
   riceKg: 30,
   driedFishKg: 55,
@@ -94,7 +109,7 @@ const CHARACTER_PROFILES = Object.freeze({
   1: Object.freeze({
     name: "Rice Merchant",
     moneyRiels: 4000,
-    vehicle: { name: "Bedford Truck", speed: 50, fuelBurnRate: 6 },
+    vehicle: { name: "Bedford Truck", speed: 12, fuelBurnRate: 6 },
     supplies: {
       riceKg: 60,
       driedFishKg: 20,
@@ -108,7 +123,7 @@ const CHARACTER_PROFILES = Object.freeze({
   2: Object.freeze({
     name: "School Teacher",
     moneyRiels: 1500,
-    vehicle: { name: "Ox-Cart", speed: 20, fuelBurnRate: 0 },
+    vehicle: { name: "Ox-Cart", speed: 8, fuelBurnRate: 0 },
     supplies: {
       riceKg: 30,
       driedFishKg: 20,
@@ -124,7 +139,7 @@ const CHARACTER_PROFILES = Object.freeze({
     moneyRiels: 8000,
     vehicle: {
       name: "Peugeot 203",
-      speed: 70,
+      speed: 16,
       fuelBurnRate: 5,
       repairRisk: true,
     },
@@ -207,13 +222,21 @@ function getElement(id) {
   return document.getElementById(id);
 }
 
+function weatherLabel(weather = gameState.weather) {
+  return {
+    [WEATHER_STATES.CLEAR]: "CLEAR",
+    [WEATHER_STATES.MONSOON_RAIN]: "MONSOON RAIN",
+    [WEATHER_STATES.FLASH_FLOOD]: "FLASH FLOOD",
+  }[weather] || weather;
+}
+
 function renderStatusBar() {
   const statusBar = getElement("status-bar");
   if (!statusBar) return;
 
   const values = {
     "status-day": String(gameState.day).padStart(2, "0"),
-    "status-weather": gameState.weather,
+    "status-weather": weatherLabel(),
     "status-health": `${Math.round(averageHealth())}%`,
     "status-distance": `${Math.max(0, gameState.targetDistance - gameState.distanceTraveled)} km left`,
   };
@@ -245,7 +268,7 @@ function renderAscii() {
 
   const art = window.ASCII_ART;
   if (art) {
-    if (gameState.state === GAME_STATES.MENU || gameState.state === GAME_STATES.HOW_TO_PLAY) {
+    if ([GAME_STATES.MENU, GAME_STATES.HOW_TO_PLAY, GAME_STATES.HISTORICAL_CONTEXT].includes(gameState.state)) {
   if (!document.getElementById("nr6-logo-styles")) {
     const style = document.createElement("style");
     style.id = "nr6-logo-styles";
@@ -353,6 +376,11 @@ function renderAscii() {
       return;
     }
 
+    if (gameState.state === GAME_STATES.FLASH_FLOOD) {
+      windowElement.textContent = `${art.locations.jungleRoad}\n\n${art.weather.monsoonRain}`;
+      return;
+    }
+
     if (gameState.state === GAME_STATES.TOMBSTONE_EVENT) {
       windowElement.textContent = [
         "          .----------------.",
@@ -377,7 +405,7 @@ function renderAscii() {
     }
 
     if (gameState.state === GAME_STATES.VICTORY) {
-      windowElement.textContent = art.locations.angkorWat;
+      windowElement.textContent = art.angkorWat || art.locations.angkorWat;
       return;
     }
 
@@ -392,18 +420,20 @@ function renderAscii() {
     );
     const route = "-".repeat(routeWidth).split("");
     route[markerPosition] = "#";
-    windowElement.textContent = [
+    const mapLines = [
       "  JOURNEY MAP // NATIONAL ROAD 6",
       "  [PP]--------[Kampong Cham]--------[Kampong Thom]--------[Siem Reap]",
       `       ${route.join("")}`,
       `  VEHICLE: ${gameState.vehicle.name}    POSITION: ${Math.round(gameState.distanceTraveled)} / ${gameState.targetDistance} km`,
       `  ${gameState.location}    [# = ${gameState.vehicle.name}]`,
-    ].join("\n");
+    ];
+    if (gameState.weather === WEATHER_STATES.MONSOON_RAIN) mapLines.push(art.monsoonRain || art.weather.monsoonRain);
+    windowElement.textContent = mapLines.join("\n");
     return;
   }
 
   const rain =
-    gameState.weather === "Heavy Rain"
+    gameState.weather === WEATHER_STATES.MONSOON_RAIN
       ? "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"
       : "                                ";
   windowElement.textContent = [
@@ -441,9 +471,7 @@ function updatePartyStatuses(cause = "Illness and exhaustion on the monsoon road
         member.tombstoneRecorded = true;
       }
     }
-    else if (member.health < 25) member.status = "Critical";
-    else if (member.health < 60) member.status = "Injured";
-    else member.status = "Healthy";
+    else if (member.status !== "Fever" && member.status !== "Malaria") member.status = "Healthy";
   });
 }
 
@@ -471,19 +499,33 @@ function useRepairParts() {
 }
 
 function damageVehicle() {
-  gameState.vehicle.speed = Math.max(20, gameState.vehicle.speed - 5);
+  gameState.vehicle.speed = Math.max(3, gameState.vehicle.speed - 2);
   gameState.vehicle.fuelBurnRate += 1;
+  gameState.vehicleCondition = Math.max(0, gameState.vehicleCondition - 10);
   return "The Peugeot limps onward. Its speed and fuel economy have worsened.";
 }
 
 function useMedicine() {
   if (gameState.supplies.medicine <= 0) return "The medicine tin is empty.";
   gameState.supplies.medicine -= 1;
-  const patient =
+  const patient = gameState.party.find((member) => member.status === "Malaria" || member.status === "Fever") ||
     gameState.party.find((member) => member.health < 100) || gameState.party[0];
+  patient.status = "Healthy";
+  patient.illnessDays = 0;
   patient.health = Math.min(100, patient.health + 25);
   updatePartyStatuses();
   return `${patient.name} receives medicine and looks steadier.`;
+}
+
+function useQuinine() {
+  if (gameState.supplies.medicine <= 0) return "You have no quinine medicine left.";
+  const patient = gameState.party.find((member) => member.status === "Malaria" || member.status === "Fever");
+  if (!patient) return "No one currently needs quinine.";
+  gameState.supplies.medicine -= 1;
+  patient.status = "Healthy";
+  patient.illnessDays = 0;
+  patient.health = Math.min(100, patient.health + 10);
+  return `${patient.name} takes quinine. The illness breaks and they return to Healthy.`;
 }
 
 function worsenRandomPartyMember() {
@@ -496,9 +538,9 @@ function worsenRandomPartyMember() {
 
 function chooseWeather() {
   const roll = Math.random();
-  if (roll < 0.3) return "Heavy Rain";
-  if (roll < 0.6) return "Cloudy";
-  return "Clear";
+  if (roll < 0.6) return WEATHER_STATES.CLEAR;
+  if (roll < 0.9) return WEATHER_STATES.MONSOON_RAIN;
+  return WEATHER_STATES.FLASH_FLOOD;
 }
 
 function advanceDate() {
@@ -552,39 +594,96 @@ function consumeDailySupplies(distance) {
   return { riceNeeded, fishNeeded, fuelNeeded, shortages };
 }
 
+function progressIllness() {
+  gameState.party.forEach((member) => {
+    if (member.status === "Fever") {
+      member.illnessDays = (member.illnessDays || 0) + 1;
+      if (member.illnessDays >= 2) member.status = "Malaria";
+    }
+    if (member.status === "Malaria") member.health = Math.max(0, member.health - 15);
+  });
+  updatePartyStatuses("Untreated illness on the monsoon road.");
+}
+
+function infectFromMonsoon() {
+  if (gameState.weather !== WEATHER_STATES.MONSOON_RAIN || gameState.rationLevel !== "Bare Bones" || Math.random() >= 0.15) return null;
+  const healthy = gameState.party.find((member) => member.status === "Healthy" && member.health > 0);
+  if (!healthy) return null;
+  healthy.status = "Fever";
+  healthy.illnessDays = 0;
+  return `${healthy.name} develops a fever in the wet weather and thin rations.`;
+}
+
 function nextDay() {
   if (gameState.state !== GAME_STATES.OVERWORLD) return;
 
   gameState.day += 1;
   advanceDate();
   gameState.weather = chooseWeather();
+  gameState.dailyDistance = 0;
 
-  const weatherModifier = gameState.weather === "Heavy Rain" ? 0.5 : 1;
-  const distance =
-    gameState.vehicle.speed * PACE_MODIFIERS[gameState.pace] * weatherModifier;
-  const suppliesUsed = consumeDailySupplies(distance);
+  if (gameState.weather === WEATHER_STATES.FLASH_FLOOD) {
+    gameState.state = GAME_STATES.FLASH_FLOOD;
+    renderNarrative([
+      { text: "FLASH FLOOD", amber: true },
+      { text: "A wall of monsoon water has turned the road into deep mud." },
+      { text: "1. Wait one day for the water to fall" },
+      { text: "2. Risk crossing the deep mud (-20% vehicle condition)" },
+    ], true);
+    renderAll();
+    return;
+  }
+  gameState.state = GAME_STATES.MORNING_TRAVEL;
+  travelPhase("Morning");
+}
+
+function resolveFlashFlood(choice) {
+  if (choice === "1") {
+    gameState.weather = WEATHER_STATES.CLEAR;
+    showOverworldMenu("The party loses the day waiting for floodwater to drop. No distance is covered.");
+    return;
+  }
+  if (choice === "2") {
+    gameState.vehicleCondition = Math.max(0, gameState.vehicleCondition - 20);
+    showNightCampMenu("The party inches through deep mud, but the flash flood halts all forward travel. Vehicle condition falls by 20%.");
+    return;
+  }
+  renderNarrative([{ text: "Choose 1 to wait, or 2 to risk crossing the deep mud." }]);
+}
+
+function travelPhase(phase) {
+  if (![GAME_STATES.MORNING_TRAVEL, GAME_STATES.AFTERNOON_TRAVEL].includes(gameState.state)) return;
+
+  const weatherModifier = gameState.weather === WEATHER_STATES.MONSOON_RAIN ? 0.5 : 1;
+  const phaseDistance = (gameState.vehicle.speed * PACE_MODIFIERS[gameState.pace] * weatherModifier) / 2;
+  gameState.dailyDistance += phaseDistance;
   gameState.distanceTraveled = Math.min(
     gameState.targetDistance,
-    gameState.distanceTraveled + distance,
+    gameState.distanceTraveled + phaseDistance,
   );
   gameState.location = getWaypoint();
   renderAll();
 
+  if (phase === "Morning") {
+    gameState.state = GAME_STATES.AFTERNOON_TRAVEL;
+    renderNarrative([
+      { text: `${gameState.date} // ${weatherLabel()} // MORNING TRAVEL`, amber: true },
+      { text: `The party covers ${phaseDistance.toFixed(1)} km before noon. Total today: ${gameState.dailyDistance.toFixed(1)} km.` },
+      { text: "1. Continue with Afternoon Travel" },
+    ], true);
+    return;
+  }
+
+  finishTravelDay();
+}
+
+function finishTravelDay() {
+  const suppliesUsed = consumeDailySupplies(gameState.dailyDistance);
+  progressIllness();
+  const newFever = infectFromMonsoon();
+
   if (gameState.distanceTraveled >= gameState.targetDistance) {
-    gameState.state = GAME_STATES.VICTORY;
-    renderNarrative(
-      [
-        { text: "ARRIVAL AT ANGKOR WAT", amber: true },
-        {
-          text: `After ${gameState.day - 1} days on the road, the towers rise beyond the trees.`,
-        },
-        {
-          text: "You made it to Siem Reap. Enter 1 to begin again, or 2 to review your status.",
-        },
-      ],
-      true,
-    );
-    renderAll();
+    showVictoryScreen();
     return;
   }
 
@@ -611,7 +710,7 @@ function nextDay() {
   const progress = [
     { text: `${gameState.date} // ${gameState.weather}`, amber: true },
     {
-      text: `You travel ${Math.round(distance)} km at a ${gameState.pace.toLowerCase()} pace.`,
+      text: `Afternoon Travel complete. Today the party covers ${gameState.dailyDistance.toFixed(1)} km at a ${gameState.pace.toLowerCase()} pace through ${weatherLabel().toLowerCase()}.`,
     },
     {
       text: `Supplies used: ${suppliesUsed.riceNeeded.toFixed(1)} kg rice, ${suppliesUsed.fishNeeded.toFixed(1)} kg fish, ${suppliesUsed.fuelNeeded.toFixed(1)} L fuel.`,
@@ -622,6 +721,11 @@ function nextDay() {
       text: `Shortage: ${suppliesUsed.shortages.join(", ")}. The party's health suffers.`,
     });
   }
+  if (newFever) progress.push({ text: newFever });
+  if (gameState.pendingTravelMessage) {
+    progress.push({ text: gameState.pendingTravelMessage });
+    gameState.pendingTravelMessage = "";
+  }
 
   const eventChance = gameState.pace === "Grueling"
     ? 0.55
@@ -629,12 +733,7 @@ function nextDay() {
       ? 0.35
       : 0.45;
   if (Math.random() < eventChance) triggerEvent(progress);
-  else {
-    progress.push({
-      text: "Enter 1 to travel, 2 for rations, 3 for pace, 4 for shop, or 5 for status.",
-    });
-    renderNarrative(progress, true);
-  }
+  else showNightCampMenu(progress);
 }
 
 function getWaypoint() {
@@ -642,6 +741,43 @@ function getWaypoint() {
   if (gameState.distanceTraveled >= 150) return "Kampong Thom road";
   if (gameState.distanceTraveled >= 60) return "Kampong Cham road";
   return "National Road 6";
+}
+
+function calculateFinalScore() {
+  const survivingPartyCount = livingParty().length;
+  return Math.max(0, Math.round(
+    (survivingPartyCount * 1000) +
+    gameState.moneyRiels +
+    (gameState.supplies.riceKg * 10) -
+    (gameState.day * 50),
+  ));
+}
+
+function saveHighScore(score) {
+  const scores = readLocalStorage("nr6HighScores");
+  scores.push({
+    score,
+    leaderName: gameState.leaderName || "Unnamed traveler",
+    date: gameState.date,
+  });
+  scores.sort((a, b) => b.score - a.score);
+  writeLocalStorage("nr6HighScores", scores.slice(0, 10));
+  return scores[0];
+}
+
+function showVictoryScreen() {
+  gameState.state = GAME_STATES.VICTORY;
+  gameState.finalScore = calculateFinalScore();
+  const highScore = saveHighScore(gameState.finalScore);
+  renderNarrative([
+    { text: "ARRIVAL AT ANGKOR WAT", amber: true },
+    { text: `The towers rise beyond the trees. ${gameState.leaderName || "Your party"} has reached Siem Reap.` },
+    { text: `FINAL SCORE: ${gameState.finalScore}` },
+    { text: `Survivors: ${livingParty().length} | Riels: ${gameState.moneyRiels} | Rice: ${gameState.supplies.riceKg.toFixed(1)} kg | Days: ${gameState.day}` },
+    { text: `HIGH SCORE: ${highScore.score} (${highScore.leaderName})` },
+    { text: "1. Play Again    2. Review Status" },
+  ], true);
+  renderAll();
 }
 
 function readLocalStorage(key, fallback = []) {
@@ -707,12 +843,7 @@ function resolveTombstone(choice) {
   if (!seen.includes(stone.id)) seen.push(stone.id);
   writeLocalStorage("nr6TombstonesSeen", seen);
   gameState.pendingTombstone = null;
-  gameState.state = GAME_STATES.OVERWORLD;
-  renderNarrative([
-    { text: choice === "1" ? "You pause, leave a little rice, and remember the traveler." : "You pass the marker as the rain begins again." },
-    { text: "Enter 1 to travel, 2 for rations, 3 for pace, 4 for shop, or 5 for status." },
-  ], true);
-  renderAll();
+  showNightCampMenu(choice === "1" ? "You pause, leave a little rice, and remember the traveler." : "You pass the marker as the rain begins again.");
 }
 
 function checkRiverWaypoint() {
@@ -757,8 +888,8 @@ function resolveRiverCrossing(choice) {
         gameState.supplies.riceKg = Math.max(0, gameState.supplies.riceKg - 10);
         result = "The current sweeps away 10 kg of rice, but the party reaches the far bank.";
       } else {
-        gameState.vehicle.speed = Math.max(10, gameState.vehicle.speed - 10);
-        result = "The crossing damages the vehicle. Its speed drops by 10 km per day.";
+        gameState.vehicle.speed = Math.max(3, gameState.vehicle.speed - 3);
+        result = "The crossing damages the vehicle. Its speed drops by 3 km per day.";
       }
     } else result = "The party fords the river successfully, soaked but safe.";
   } else if (choice === "3") {
@@ -777,9 +908,7 @@ function resolveRiverCrossing(choice) {
     return;
   }
   gameState.pendingRiver = null;
-  gameState.state = GAME_STATES.OVERWORLD;
-  renderNarrative([{ text: result }, { text: "Enter 1 to travel, 2 for rations, 3 for pace, 4 for shop, or 5 for status." }], true);
-  renderAll();
+  showNightCampMenu(result);
 }
 
 function selectWeightedEvent() {
@@ -790,6 +919,11 @@ function selectWeightedEvent() {
   return table.find((event) => (roll -= event.weight) <= 0) || table[table.length - 1];
 }
 
+function loseDays(days) {
+  gameState.day += days;
+  advanceDate();
+}
+
 function resolveWeightedEventChoice(event, choice) {
   const partyMember = gameState.party[Math.floor(Math.random() * gameState.party.length)];
   switch (event.id) {
@@ -798,7 +932,7 @@ function resolveWeightedEventChoice(event, choice) {
         gameState.supplies.spareTires -= 1;
         return "You fit a spare tire and continue.";
       }
-      gameState.vehicle.speed = Math.max(10, gameState.vehicle.speed - 10);
+      gameState.vehicle.speed = Math.max(3, gameState.vehicle.speed - 3);
       return "There is no spare tire. The vehicle limps onward at reduced speed.";
     case "broken_wooden_axle":
       if (choice === "1" && gameState.moneyRiels >= 250) {
@@ -809,7 +943,7 @@ function resolveWeightedEventChoice(event, choice) {
       return "The axle is lashed together. You lose a day making the repair.";
     case "red_clay_overheat":
       if (choice === "1") { gameState.day += 1; advanceDate(); return "The engine cools under the rain. You lose a day."; }
-      gameState.vehicle.speed = Math.max(10, gameState.vehicle.speed - 5);
+      gameState.vehicle.speed = Math.max(3, gameState.vehicle.speed - 2);
       return "The vehicle forces through, but the engine will run slower from now on.";
     case "malaria_fever":
     case "waterborne_bug":
@@ -833,7 +967,7 @@ function resolveWeightedEventChoice(event, choice) {
       return "The party waits out the worst of the water and weather.";
     case "fallen_tree":
       if (choice === "1") { gameState.day += 1; advanceDate(); return "Together with other travelers, you clear the road."; }
-      gameState.vehicle.speed = Math.max(10, gameState.vehicle.speed - 5);
+      gameState.vehicle.speed = Math.max(3, gameState.vehicle.speed - 2);
       return "The detour is thick mud. The vehicle loses speed.";
     case "skun_mud":
       if (choice === "1" && gameState.moneyRiels >= 200) { gameState.moneyRiels -= 200; return "Local oxen pull the vehicle free for 200 riels."; }
@@ -860,6 +994,27 @@ function resolveWeightedEventChoice(event, choice) {
     case "helpful_mechanic":
       gameState.vehicle.speed += 5;
       return "The mechanic tunes the vehicle. Its speed improves by 5 km per day.";
+    case "washed_out_timber_bridge":
+      if (choice === "1") {
+        loseDays(2);
+        return "The party waits two days for the river to drop below the washed-out bridge.";
+      }
+      if (choice === "2") {
+        if (gameState.moneyRiels < 100) return "You cannot afford the ox team, so the party must wait two days.";
+        gameState.moneyRiels -= 100;
+        return "A local ox team hauls the vehicle across the broken bridge for 100 riels.";
+      }
+      gameState.vehicleCondition = Math.max(0, gameState.vehicleCondition - 30);
+      return "The ford holds, but deep water tears at the vehicle. Condition falls by 30%.";
+    case "deep_clay_mud_pit":
+      if (choice === "1") {
+        loseDays(1);
+        gameState.party.forEach((member) => { member.health = Math.max(0, member.health - 10); });
+        updatePartyStatuses("Exhaustion from digging through the clay mud.");
+        return "After a day of digging and pushing, the party frees the vehicle. Everyone loses 10 stamina.";
+      }
+      loseDays(2);
+      return "The party waits two days beside the pit until a passing truck can help pull free.";
     default:
       return "The party handles the trouble and continues north.";
   }
@@ -877,8 +1032,7 @@ function triggerEvent(previousLines = []) {
       ...previousLines,
       { text: `EVENT: ${gameState.pendingEvent.title}`, amber: true },
       { text: gameState.pendingEvent.text },
-      { text: `1) ${gameState.pendingEvent.choices[0]}` },
-      { text: `2) ${gameState.pendingEvent.choices[1]}` },
+      ...gameState.pendingEvent.choices.map((label, index) => ({ text: `${index + 1}) ${label}` })),
     ],
     true,
   );
@@ -905,14 +1059,83 @@ function showOverworldMenu(message = "") {
   renderNarrative([
     ...(message ? [{ text: message }] : []),
     { text: `${gameState.date} // ${gameState.location}`, amber: true },
-    { text: `Rations: ${gameState.rationLevel} (${RATION_LEVELS[gameState.rationLevel].kgPerPerson} kg/person/day) | Pace: ${gameState.pace}` },
+    { text: `Weather: ${weatherLabel()} | Rations: ${gameState.rationLevel} (${RATION_LEVELS[gameState.rationLevel].kgPerPerson} kg/person/day) | Pace: ${gameState.pace}` },
     { text: "1. Travel one day" },
     { text: "2. Adjust rations" },
     { text: "3. Adjust pace" },
     { text: "4. Visit roadside shop" },
     { text: "5. View party status" },
+    { text: "6. Use Quinine Medicine" },
   ], true);
   renderAll();
+}
+
+function showNightCampMenu(previous = []) {
+  gameState.state = GAME_STATES.NIGHT_CAMP;
+  const lines = Array.isArray(previous)
+    ? previous
+    : previous
+      ? [{ text: previous }]
+      : [];
+  renderNarrative([
+    ...lines,
+    { text: "NIGHT CAMP // CHOOSE YOUR REST", amber: true },
+    { text: "1. Camp Roadside — no cost, but higher malaria risk" },
+    { text: "2. Rest at Nearby Wat/Pagoda — lose 1 extra day; +15 health; cure Fever" },
+    { text: "3. Risk Night Driving — +10 km; 50% chance of mud breakdown" },
+  ], true);
+  renderAll();
+}
+
+function resolveNightCamp(choice) {
+  if (choice === "1") {
+    const risk = gameState.weather === WEATHER_STATES.MONSOON_RAIN ? 0.25 : 0.1;
+    const healthy = gameState.party.find((member) => member.status === "Healthy" && member.health > 0);
+    const illness = healthy && Math.random() < risk;
+    if (illness) {
+      healthy.status = "Fever";
+      healthy.illnessDays = 0;
+    }
+    showOverworldMenu(illness
+      ? `${healthy.name} develops a fever after a mosquito-heavy roadside camp.`
+      : "The party camps roadside and wakes before dawn.");
+    return;
+  }
+
+  if (choice === "2") {
+    gameState.day += 1;
+    advanceDate();
+    gameState.party.forEach((member) => {
+      if (member.health <= 0) return;
+      member.health = Math.min(100, member.health + 15);
+      if (member.status === "Fever") {
+        member.status = "Healthy";
+        member.illnessDays = 0;
+      }
+    });
+    updatePartyStatuses();
+    showOverworldMenu("The Wat offers dry shelter and a quiet night. The party restores health, but loses one extra day.");
+    return;
+  }
+
+  if (choice === "3") {
+    gameState.distanceTraveled = Math.min(gameState.targetDistance, gameState.distanceTraveled + 10);
+    gameState.location = getWaypoint();
+    let message = "Headlamps cut through the dark. Night driving gains 10 km.";
+    if (Math.random() < 0.5) {
+      gameState.vehicleCondition = Math.max(0, gameState.vehicleCondition - 20);
+      gameState.vehicle.speed = Math.max(3, gameState.vehicle.speed - 2);
+      message += " The vehicle sinks in mud; condition falls 20% and speed drops by 2 km/day.";
+    }
+    if (gameState.distanceTraveled >= gameState.targetDistance) {
+      showVictoryScreen();
+      return;
+    }
+    showOverworldMenu(message);
+    return;
+  }
+
+  renderNarrative([{ text: "Choose 1 to camp roadside, 2 for the Wat, or 3 for night driving." }]);
 }
 
 function showRationMenu() {
@@ -955,6 +1178,11 @@ function setPace(choice) {
   showOverworldMenu(`Pace set to ${gameState.pace}.`);
 }
 
+function useQuinineFromOverworld() {
+  const result = useQuinine();
+  showOverworldMenu(result);
+}
+
 function buySupply(type, quantity) {
   const cost = SHOP_PRICES[type] * quantity;
   if (gameState.moneyRiels < cost)
@@ -976,7 +1204,7 @@ function showStatus() {
         text: `Leader: ${gameState.leaderName || "Unnamed"} | Profession: ${gameState.character || "Unknown"}`,
       },
       {
-        text: `Money: ${gameState.moneyRiels} riels | Pace: ${gameState.pace}`,
+        text: `Money: ${gameState.moneyRiels} riels | Pace: ${gameState.pace} | Vehicle: ${gameState.vehicleCondition}%`,
       },
       {
         text: `Rice: ${gameState.supplies.riceKg.toFixed(1)} kg | Fish: ${gameState.supplies.driedFishKg.toFixed(1)} kg | Fuel: ${gameState.supplies.fuelLiters.toFixed(1)} L | Tires: ${gameState.supplies.spareTires} | Medicine: ${gameState.supplies.medicine}`,
@@ -985,7 +1213,7 @@ function showStatus() {
       {
         text:
           gameState.state === GAME_STATES.OVERWORLD
-            ? "Enter 1 to travel, 2 for rations, 3 for pace, 4 for shop, or 5 for status."
+            ? "Enter 1 to travel, 2 for rations, 3 for pace, 4 for shop, 5 for status, or 6 for quinine."
             : "Enter 1 to continue.",
       },
     ],
@@ -1015,6 +1243,29 @@ function showHowToPlay() {
     ],
     true,
   );
+  renderAscii();
+}
+
+function showHistoricalContext() {
+  gameState.state = GAME_STATES.HISTORICAL_CONTEXT;
+  renderNarrative([
+    { text: "=================================================================", amber: true },
+    { text: "   ARCHIVAL DOSSIER: KINGDOM OF CAMBODIA (SEPTEMBER 1962)        ", amber: true },
+    { text: "   CLASSIFICATION: UNCLASSIFIED // FIELD TRAVEL BRIEFING          ", amber: true },
+    { text: "=================================================================", amber: true,},
+
+    { text: "1. THE SANGKUM ERA & THE DUAL REALITY OF 1962" },
+    { text: "September 1962 sits at the peak of Prince Norodom Sihanouk's Sangkum Reastr Niyum ('Popular Socialist Community'). In Phnom Penh, New Khmer Architecture flourishes alongside wide boulevards, vibrant jazz clubs, and non-aligned diplomacy funded by French and US aid. However, this modernity ends at the city limits. Over 85% of the population lives in rural provinces where life remains governed by the agricultural calendar, seasonal monsoons, and a complete absence of paved infrastructure." },
+
+    { text: "2. NATIONAL ROAD 6: THE RED CLAY ARTERY" },
+    { text: "Unlike the American-built Khmer-American Friendship Highway (NR4 to Sihanoukville) paved in 1959, National Road 6 remains a neglected patchwork of decaying French-era macadam, loose gravel, and raw red laterite clay. Stretching 310 km from Phnom Penh through Skun and Kampong Thom to Siem Reap, the road parallels the Tonlé Sap basin. During the peak September monsoon, river swells transform low-lying sections into bottomless mud slurry, collapse timber bridges ('ស្ពាន'), and require vehicle drivers to wait days for wooden ferry barges ('ស្រឡាង') or hire local ox teams ('រទេសគោ') for towing." },
+
+    { text: "3. FOREIGN FIELD NOTES & SURVIVAL LOGISTICS" },
+    { text: "Archival records from USOM (United States Operations Mission) personnel, French Coopération Technique engineers, and EFEO archaeologists traveling to Angkor Wat outline strict protocols for overland journeys: vehicles like the Peugeot 203 or Bedford commercial trucks must carry spare fan belts, inner tube vulcanizing kits, extra fuel jerrycans, and dry rice stores. In the forested rubber plantation zones of Kampong Cham and Kampong Thom, Anopheles mosquitoes make malaria endemic; daily doses of Quinine or Nivaquine are mandatory for survival." },
+
+    { text: "4. Return to Main Menu" },
+    { text: "Press 0 to return to Main Menu." },
+  ], true);
   renderAscii();
 }
 
@@ -1053,13 +1304,17 @@ function applyCharacterProfile(profile) {
   gameState.distanceTraveled = 0;
   gameState.day = 1;
   gameState.date = "September 1, 1962";
-  gameState.weather = "Clear";
+  gameState.weather = WEATHER_STATES.CLEAR;
   gameState.pendingEvent = null;
   gameState.pace = "Steady";
   gameState.rationLevel = "Meager";
   gameState.riverCrossings = { 70: false, 190: false };
   gameState.pendingRiver = null;
   gameState.pendingTombstone = null;
+  gameState.pendingTravelMessage = "";
+  gameState.dailyDistance = 0;
+  gameState.vehicleCondition = 100;
+  gameState.finalScore = 0;
   gameState.leaderName = "";
   gameState.companionTarget = 0;
   gameState.companionIndex = 0;
@@ -1204,6 +1459,7 @@ function handleInput(choice) {
           },
           { text: "1. Begin Journey" },
           { text: "2. How to Play" },
+          { text: "3. Historical Context (1962)" },
         ],
         true,
       );
@@ -1216,12 +1472,32 @@ function handleInput(choice) {
     return;
   }
 
+  if (gameState.state === GAME_STATES.HISTORICAL_CONTEXT) {
+    if (command === "0") {
+      gameState.state = GAME_STATES.MENU;
+      renderNarrative([
+        { text: "NATIONAL ROAD 6 (1962)", amber: true },
+        { text: "Cambodia, September 1962. The monsoon rains have begun. Can you navigate National Road 6 from Phnom Penh to Siem Reap?" },
+        { text: "1. Begin Journey" },
+        { text: "2. How to Play" },
+        { text: "3. Historical Context (1962)" },
+      ], true);
+      renderAll();
+    } else if (command === "1" || command === "2" || command === "3") {
+      showHistoricalContext();
+    } else {
+      renderNarrative([{ text: "Choose 1, 2, 3, or 0 to return to the main menu." }]);
+    }
+    return;
+  }
+
   if (gameState.state === GAME_STATES.MENU) {
     if (command === "1") startGame();
     else if (command === "2") showHowToPlay();
+    else if (command === "3") showHistoricalContext();
     else
       renderNarrative(
-        [{ text: "Choose 1 to begin your journey, or 2 for how to play." }],
+        [{ text: "Choose 1 to begin, 2 for how to play, or 3 for historical context." }],
         true,
       );
     renderAscii();
@@ -1303,6 +1579,22 @@ function handleInput(choice) {
     return;
   }
 
+  if (gameState.state === GAME_STATES.FLASH_FLOOD) {
+    resolveFlashFlood(command);
+    return;
+  }
+
+  if (gameState.state === GAME_STATES.AFTERNOON_TRAVEL) {
+    if (command === "1") travelPhase("Afternoon");
+    else renderNarrative([{ text: "Enter 1 to begin Afternoon Travel." }]);
+    return;
+  }
+
+  if (gameState.state === GAME_STATES.NIGHT_CAMP) {
+    resolveNightCamp(command);
+    return;
+  }
+
   if (gameState.state === GAME_STATES.TOMBSTONE_EVENT) {
     if (command === "1" || command === "2") resolveTombstone(command);
     else renderNarrative([{ text: "Choose 1 to pay respects, or 2 to pass quietly." }]);
@@ -1315,28 +1607,22 @@ function handleInput(choice) {
     else if (command === "3") showPaceMenu();
     else if (command === "4") showShop();
     else if (command === "5") showStatus();
+    else if (command === "6") useQuinineFromOverworld();
     else
       renderNarrative([
-        { text: "Choose 1 to travel, 2 for rations, 3 for pace, 4 for shop, or 5 for status." },
+        { text: "Choose 1 to travel, 2 for rations, 3 for pace, 4 for shop, 5 for status, or 6 for quinine." },
       ]);
     return;
   }
 
   if (gameState.state === GAME_STATES.EVENT_DECISION) {
-    if (command === "1" || command === "2") {
+    const eventChoice = Number(command);
+    if (Number.isInteger(eventChoice) && eventChoice >= 1 && eventChoice <= gameState.pendingEvent.choices.length) {
       const result = resolveWeightedEventChoice(gameState.pendingEvent, command);
       gameState.pendingEvent = null;
-      gameState.state = GAME_STATES.OVERWORLD;
-      renderAll();
-      renderNarrative(
-        [
-          { text: result },
-          { text: "Enter 1 to travel, 2 for rations, 3 for pace, 4 for shop, or 5 for status." },
-        ],
-        true,
-      );
+      showNightCampMenu(result);
     } else
-      renderNarrative([{ text: "Choose 1 or 2 to respond to the event." }]);
+      renderNarrative([{ text: "Choose one of the numbered responses to the event." }]);
     return;
   }
 
@@ -1402,6 +1688,7 @@ function initialiseGame() {
       { text: "A text-based survival journey from Phnom Penh to Angkor Wat." },
       { text: "1. Begin Journey" },
       { text: "2. How to Play" },
+      { text: "3. Historical Context (1962)" },
     ],
     true,
   );

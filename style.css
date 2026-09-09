@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 /* Keep ASCII art aligned on every screen size. */
 .ascii {
   white-space: pre;
@@ -24,16 +30,17 @@ body {
 }
 
 body {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* The stage stays 16:9 while also fitting short landscape displays. */
 .terminal-frame {
-  width: min(calc(100vw - 1rem), calc((100vh - 1rem) * 1.7778));
-  max-width: none;
+  width: min(calc(100vw - 2rem), 48rem, calc((100vh - 2rem) * 1.3333));
+  max-width: 48rem;
   height: auto;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
   min-height: 0;
   font-size: clamp(0.7rem, 1.45vw, 1.35rem);
 }
@@ -54,7 +61,7 @@ body {
 
 .ascii-viewport {
   display: flex;
-  flex: 1 1 0%;
+  flex: 0 0 24%;
   min-height: 0;
   align-items: center;
   justify-content: center;
@@ -63,10 +70,23 @@ body {
 }
 
 .narrative-viewport {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   flex: 1 1 0%;
   min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+.narrative-viewport p,
+.narrative-viewport span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .ascii-viewport > #top-ascii-window {
@@ -99,7 +119,7 @@ body {
 /* At very short viewport heights, the frame derives its size from height. */
 @media (max-height: 42rem) {
   .terminal-frame {
-    width: min(calc(100vw - 1rem), calc((100vh - 1rem) * 1.7778));
+    width: min(calc(100vw - 2rem), calc((100vh - 2rem) * 1.3333));
   }
 }
 
